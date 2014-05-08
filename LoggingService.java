@@ -16,6 +16,7 @@ import android.util.Log;
 
 public class LoggingService extends Service {
 	private Handler handler = new Handler();
+	Process pidstat;
   
 	@Override
 	public void onCreate() {
@@ -28,7 +29,7 @@ public class LoggingService extends Service {
 		Log.d("LoggingService", "Service Start!");
 	    
 		//android.os.Debug.waitForDebugger();
-
+				
 		handler.postDelayed(logProcess, 1000);
 			
 	    // want this service to continue running until it is explicitly
@@ -41,7 +42,15 @@ public class LoggingService extends Service {
 		
 		Log.d("LoggingService", "Service Stop!");
 
-		handler.removeCallbacks(logProcess);		
+		handler.removeCallbacks(logProcess);
+		/*
+		try {
+			Process p = Runtime.getRuntime().exec("/data/data/iis.ds.processlogging/lib/libbusybox.so pkill libpidstat.so");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
 		super.onDestroy();
 	}
 
@@ -55,6 +64,8 @@ public class LoggingService extends Service {
 	final Runnable logProcess = new Runnable() {
 		@Override
 		public void run() {
+			
+			handler.postDelayed(logProcess, 1000);
 			
 		    //android.os.Debug.waitForDebugger();
 			
@@ -80,7 +91,7 @@ public class LoggingService extends Service {
 			}
 			
 			// execute pidstat
-			result = CmdExec("/data/data/iis.ds.processlogging/lib/libpidstat.so");
+			result = CmdExec("/data/data/iis.ds.processlogging/lib/libpidstat.so -u 1 1");			
 			
 			if(!result.equals("")){
 				// print result to Log
@@ -101,7 +112,7 @@ public class LoggingService extends Service {
 			// send result back to main activity
 			sendBroadcast(retIntent);
 			
-			handler.postDelayed(logProcess, 1000);
+			//handler.postDelayed(logProcess, 1000);
 		}
 	};
 	
@@ -117,8 +128,7 @@ public class LoggingService extends Service {
 			while((line = in.readLine()) != null){
 				result += line + "\n";
 			};
-			
-			in.close();					
+			in.close();			
 		}
 		catch(IOException e){
 			// TODO Auto-generated catch block  
@@ -127,8 +137,7 @@ public class LoggingService extends Service {
 		
 		return result;
 	}
-	
-	
+
 	private void recordResult(String input) {
 		//TODO
 		FileOutputStream fOut = null;
